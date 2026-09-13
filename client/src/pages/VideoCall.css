@@ -1,0 +1,145 @@
+.lobbyContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background-color: rgb(1, 4, 48);
+  color: white;
+  padding: 24px;
+}
+
+.lobbyContainer video {
+  width: 320px;
+  max-width: 90vw;
+  border-radius: 12px;
+  background-color: #000;
+}
+
+.permissionError {
+  max-width: 420px;
+  text-align: center;
+  color: #ff8a8a;
+  background-color: rgba(255, 0, 0, 0.08);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+}
+
+.meetVideoContainer {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: rgb(1, 4, 48);
+}
+
+/* Grid of remote participants - fills the screen and wraps as more people join */
+.conferenceGrid {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  padding: 16px;
+  padding-bottom: 100px; /* leave room for the control bar */
+  box-sizing: border-box;
+  place-items: center;
+}
+
+/* If there's exactly one remote participant, let their tile take up more room */
+.conferenceGrid:has(.conferenceView:only-child) {
+  grid-template-columns: 1fr;
+}
+
+.conferenceView {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 140px);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.conferenceView video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.participantLabel {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+/* Your own camera preview, floating in the corner */
+.meetUserVideo {
+  position: absolute;
+  bottom: 100px;
+  right: 20px;
+  height: 20vh;
+  min-height: 120px;
+  width: auto;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  z-index: 5;
+  object-fit: cover;
+}
+
+/* Bottom control bar with camera/mic/screen-share/leave buttons */
+.buttonContainers {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: rgba(20, 20, 30, 0.7);
+  padding: 10px 16px;
+  border-radius: 999px;
+  z-index: 10;
+}
+
+.buttonContainers button {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.buttonContainers button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Connection status banner - shown during a dropped/reconnecting socket */
+.connectionBanner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  z-index: 20;
+}
+
+.connectionBannerError {
+  background-color: rgba(255, 0, 0, 0.15);
+  border-color: rgba(255, 0, 0, 0.4);
+  color: #ff8a8a;
+}

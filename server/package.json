@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@better-auth/mongo-adapter": "^1.6.25",
+    "bcrypt": "^6.0.0",
+    "better-auth": "^1.6.25",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "http-status": "^2.1.0",
+    "mongodb": "^7.5.0",
+    "mongoose": "^9.9.1",
+    "socket.io": "^4.8.3"
+  }
+}
