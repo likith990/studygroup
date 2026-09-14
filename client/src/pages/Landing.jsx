@@ -15,7 +15,7 @@ import "./Landing.css";
 export default function Landing() {
   return (
     <div className="landing min-h-screen font-sans selection:bg-violet-500/40 selection:text-white">
-      {/* Fixed atmospheric background layer */}
+      
       <div className="landing-atmosphere" aria-hidden="true">
         <div className="landing-grid" />
         <div className="landing-noise" />

@@ -16,11 +16,7 @@ import { API_BASE } from "../lib/config";
 
 import "./VideoCall.css";
 
-// socket.io's function is to just to introduction and rest will be take care by webrtc
-//the browsers use socket.io to know what kind of medai to send and how to reach me on network like in stuns erver
-//once both sides have this, rtcpeerconnections opens a direct connection
-//
-// Single source of truth for the API/socket server URL (see client/src/lib/config.js).
+
 const server_url = API_BASE;
 
 let connections = {};
@@ -28,12 +24,7 @@ let connections = {};
 const peerConfigConnections = {
   iceServers: [
     { urls: "stun:stun.easybell.de:3478" },
-    // Public/free STUN+TURN demo servers (Open Relay Project). These are fine
-    // for testing calls across strict NATs/corporate firewalls where STUN
-    // alone fails, but they're a shared public service with no uptime or
-    // bandwidth guarantee - swap these for a paid TURN provider (Twilio,
-    // Xirsys) or a self-hosted coturn instance before relying on this in
-    // production.
+    
     { urls: "stun:stun.relay.metered.ca:80" },
     {
       urls: "turn:global.relay.metered.ca:80",
@@ -53,10 +44,7 @@ const peerConfigConnections = {
   ],
 };
 
-// Modern replacement for the removed connection.addStream(stream) API.
-// If the connection already has a sender for a given track kind (audio/video),
-// we swap the track in place with replaceTrack (no renegotiation needed).
-// Otherwise we add it fresh with addTrack (this does need an offer/answer).
+
 function attachLocalStreamToConnection(pc, stream) {
   if (!pc || !stream) return;
   const senders = pc.getSenders();
@@ -76,10 +64,7 @@ export default function VideoCall() {
   let navigate = useNavigate();
   const { url: roomId } = useParams();
 
-  // "checking" | "authorized" | "unauthorized" | "error" - gates the whole
-  // lobby/call UI behind a server-side check that the visitor is actually
-  // the host or an accepted attendee of this room, not just anyone who has
-  // the link.
+  
   const [accessState, setAccessState] = useState("checking");
   const [accessError, setAccessError] = useState("");
 
@@ -152,23 +137,20 @@ export default function VideoCall() {
 
   let [videos, setVideos] = useState([]);
 
-  // socketId -> username, so remote tiles can show real names instead of raw ids
+  
   let [remoteNames, setRemoteNames] = useState({});
 
   let [permissionError, setPermissionError] = useState("");
 
   const screenTrackRef = useRef(null);
 
-  // "connected" | "reconnecting" | "disconnected" - drives the small status
-  // banner during a call so a wifi blip isn't silently confusing.
+  
   let [connectionStatus, setConnectionStatus] = useState("connected");
 
-  // Tracks whether we've completed at least one successful connection, so we
-  // can tell a first-time "connect" apart from a later automatic reconnect
-  // (socket.io fires "connect" for both).
+  
   const hasConnectedOnceRef = useRef(false);
 
-  // here we are getting permisssion of video and audio and screen
+  
 
   const getpermission = async () => {
     try {
@@ -266,12 +248,7 @@ export default function VideoCall() {
     }
   };
 
-  // Tears down every peer connection and clears remote tiles. Used when we
-  // reconnect after a dropped socket: our old socket.id is gone, so any
-  // RTCPeerConnections keyed by it are dead weight - cleanest thing is to
-  // start from zero and let the server's "user-joined" broadcast (which
-  // fires again once we re-emit join-call below) rebuild every connection
-  // from scratch.
+ 
   let resetPeerConnections = () => {
     for (let id in connections) {
       try {
@@ -285,17 +262,11 @@ export default function VideoCall() {
   };
 
   let connectToSocketServer = () => {
-    //socketRef.current is used to store socket.io-client object which is normally called as socket
-
-    //io.connect is like the biggest and overall connection between frontend and backend
-    //such big connection can be made by several different browsers at a time so each gets a unique id
+    
 
     socketRef.current = io.connect(server_url, {
       secure: true,
-      // socket.io reconnects automatically by default, but we set these
-      // explicitly so the behavior (how many attempts, how long between
-      // them) is intentional rather than left at whatever the library's
-      // defaults happen to be.
+      
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
@@ -304,11 +275,7 @@ export default function VideoCall() {
 
     socketRef.current.on("signal", gotMessageFromServer);
 
-    // Registered once, outside the "connect" handler below - "connect" can
-    // fire more than once (initial connect, then again after every dropped-
-    // connection reconnect), and re-registering these inside it would stack
-    // up duplicate listeners each time, causing every event to double- or
-    // triple-fire the more reconnects happen.
+    
     socketRef.current.on("user-left", (id) => {
       setVideos((videos) => videos.filter((video) => video.socketId !== id));
       setRemoteNames((prevNames) => {
@@ -324,9 +291,7 @@ export default function VideoCall() {
       }
 
       clients.forEach((socketListId) => {
-        // Skip ourselves, and skip peers we already have a connection with -
-        // recreating an existing connection here would tear down a working call
-        // every time someone new joins the room.
+       
         if (
           socketListId === socketIdRef.current ||
           connections[socketListId]
@@ -334,14 +299,14 @@ export default function VideoCall() {
           return;
         }
 
-        //when someone is joined we create a new RTCPeerConnection and store that with its id in connections object
+       
         connections[socketListId] = new RTCPeerConnection(
           peerConfigConnections,
         );
-        //RTCPeerConnection lets to browsers talk to each other without any middleman
+        
 
         connections[socketListId].onicecandidate = (event) => {
-          //icecandidate is a protocol and it is just to establish a connection betweeen two people
+          
           if (event.candidate !== null) {
             socketRef.current.emit(
               "signal",
@@ -351,16 +316,7 @@ export default function VideoCall() {
           }
         };
 
-        // Modern equivalent of onaddstream: the browser gives us each remote
-        // track separately, along with the MediaStream it belongs to.
-        // Note: this fires once per track (video, then audio) for the same
-        // peer, in very quick succession - so the add-vs-update decision
-        // MUST be made inside the setVideos updater (using the guaranteed
-        // current state), not from an external ref checked beforehand.
-        // Checking a ref before calling setVideos is a race condition:
-        // both track events can see the stale ref before either state
-        // update has actually applied, and both end up adding a new tile
-        // instead of the second one updating the first.
+        
         connections[socketListId].ontrack = (event) => {
           const remoteStream = event.streams[0];
           setVideos((prevVideos) => {
@@ -395,7 +351,7 @@ export default function VideoCall() {
             window.localStream,
           );
         } else {
-          // there will be a screen screen
+         
           let blackSilence = (...args) =>
             new MediaStream([black(...args), silence()]);
           window.localStream = blackSilence();
@@ -407,13 +363,12 @@ export default function VideoCall() {
       });
 
       if (id === socketIdRef.current) {
-        //we are checking if the person who joined is me, this if is true if the user who is joined is me
+        
 
         for (let id2 in connections) {
-          //we iterate through all the connections in the room
+          
           if (id2 === socketIdRef.current) continue;
-          //in this one of the connections is me so we skip that
-          //below this we are creating a letter and sending it and then it will be accept3ed and then thing will be shared
+          
           connections[id2].createOffer().then((description) => {
             connections[id2]
               .setLocalDescription(description)
@@ -434,9 +389,7 @@ export default function VideoCall() {
       socketIdRef.current = socketRef.current.id;
 
       if (hasConnectedOnceRef.current) {
-        // This "connect" is an automatic reconnect after a dropped socket,
-        // not our first join - our old socket.id (and everything the peers
-        // knew us by) is gone, so wipe local state and rejoin fresh below.
+       
         resetPeerConnections();
       }
       hasConnectedOnceRef.current = true;
@@ -459,8 +412,7 @@ export default function VideoCall() {
   };
 
   useEffect(() => {
-    // Wait for the access check to confirm they're allowed in before even
-    // prompting for camera/mic permissions.
+    
     if (accessState === "authorized") getpermission();
   }, [accessState]);
 
@@ -549,8 +501,7 @@ export default function VideoCall() {
     setAudio(!audio);
   };
 
-  // Stops the active screen share and swaps every peer connection's outgoing
-  // video track back to the camera.
+  
   let stopScreenShare = () => {
     if (screenTrackRef.current) {
       screenTrackRef.current.stop();
@@ -575,10 +526,7 @@ export default function VideoCall() {
     setScreen(false);
   };
 
-  // Grabs a screen-capture track and swaps it in as the outgoing video track
-  // on every existing peer connection, using replaceTrack (no renegotiation
-  // needed). Reverts back to the camera automatically if the user stops
-  // sharing via the browser's own "Stop sharing" control.
+  
   let startScreenShare = async () => {
     try {
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -618,10 +566,7 @@ export default function VideoCall() {
     }
   };
 
-  // Stops the camera/mic, closes every peer connection, and disconnects the
-  // socket. Used both when the user clicks "leave call" and automatically
-  // when the component unmounts (e.g. navigating away), so we don't leak
-  // camera/mic access or leave dead RTCPeerConnections open in the background.
+ 
   let cleanupCall = () => {
     try {
       if (window.localStream) {
@@ -646,8 +591,7 @@ export default function VideoCall() {
     connections = {};
 
     if (socketRef.current) {
-      // Turn off auto-reconnect before disconnecting on purpose - otherwise
-      // socket.io would try to reconnect us right after we deliberately left.
+     
       socketRef.current.io.opts.reconnection = false;
       socketRef.current.disconnect();
     }
@@ -659,14 +603,14 @@ export default function VideoCall() {
   };
 
   useEffect(() => {
-    // Runs when the component unmounts (tab closed, user navigates away, etc.)
+    
     return () => {
       cleanupCall();
     };
   }, []);
 
   let getUserMedia = () => {
-    //this function is used when user turns off his video so it shouldnt go
+    
 
     if ((video && videoAvailable) || (audio && audioAvailable)) {
       navigator.mediaDevices
