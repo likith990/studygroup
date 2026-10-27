@@ -8,12 +8,9 @@ export default function FormDialog({ rerender }) {
 
   return (
     <>
-      <button
-        onClick={() => setisform(true)}
-        className="flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition-all duration-200 hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-900/50 active:scale-95"
-      >
-        <Plus className="h-4 w-4" />
-        <span>Create Session</span>
+      <button onClick={() => setisform(true)} aria-label="Create session" className="btn btn-primary">
+        <Plus className="h-4 w-4" strokeWidth={2} />
+        <span className="hidden min-[420px]:inline">Create session</span>
       </button>
       {isform &&
         createPortal(

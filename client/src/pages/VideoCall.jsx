@@ -1,21 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import VideocamIcon from "@mui/icons-material/Videocam";
-import VideocamOffIcon from "@mui/icons-material/VideocamOff";
-import MicIcon from "@mui/icons-material/Mic";
-import MicOffIcon from "@mui/icons-material/MicOff";
-import ScreenShareIcon from "@mui/icons-material/ScreenShare";
-import StopScreenShareIcon from "@mui/icons-material/StopScreenShare";
-import CallEndIcon from "@mui/icons-material/CallEnd";
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  ScreenShare,
+  ScreenShareOff,
+  PhoneOff,
+} from "lucide-react";
 import io from "socket.io-client";
 import { API_BASE } from "../lib/config";
 
 import "./VideoCall.css";
-
 
 const server_url = API_BASE;
 
@@ -44,7 +42,6 @@ const peerConfigConnections = {
   ],
 };
 
-
 function attachLocalStreamToConnection(pc, stream) {
   if (!pc || !stream) return;
   const senders = pc.getSenders();
@@ -64,7 +61,6 @@ export default function VideoCall() {
   let navigate = useNavigate();
   const { url: roomId } = useParams();
 
-  
   const [accessState, setAccessState] = useState("checking");
   const [accessError, setAccessError] = useState("");
 
@@ -113,13 +109,13 @@ export default function VideoCall() {
   let socketRef = useRef();
   let socketIdRef = useRef();
 
-  let localVideoRef = useRef(); // it is for our video and not othrs
+  let localVideoRef = useRef();
 
   let [videoAvailable, setVideoAvailable] = useState(true);
 
   let [audioAvailable, setAudioAvailable] = useState(true);
 
-  let [video, setVideo] = useState([]); // on and offing of video
+  let [video, setVideo] = useState([]);
 
   let [audio, setAudio] = useState();
 
@@ -137,28 +133,21 @@ export default function VideoCall() {
 
   let [videos, setVideos] = useState([]);
 
-  
   let [remoteNames, setRemoteNames] = useState({});
 
   let [permissionError, setPermissionError] = useState("");
 
   const screenTrackRef = useRef(null);
 
-  
   let [connectionStatus, setConnectionStatus] = useState("connected");
 
-  
   const hasConnectedOnceRef = useRef(false);
-
-  
 
   const getpermission = async () => {
     try {
       const videoPermission = await navigator.mediaDevices.getUserMedia({
         video: true,
       });
-      //videopermission holds a mediastream object
-      //navigator is browser object which has all things related to hardware and etc
 
       if (videoPermission) {
         setVideoAvailable(true);
@@ -208,7 +197,6 @@ export default function VideoCall() {
     getMedia();
   }
 
-  //TODO
   let gotMessageFromServer = (fromId, message) => {
     var signal = JSON.parse(message);
 
@@ -248,7 +236,6 @@ export default function VideoCall() {
     }
   };
 
- 
   let resetPeerConnections = () => {
     for (let id in connections) {
       try {
@@ -262,7 +249,6 @@ export default function VideoCall() {
   };
 
   let connectToSocketServer = () => {
-    
 
     socketRef.current = io.connect(server_url, {
       secure: true,
@@ -275,7 +261,6 @@ export default function VideoCall() {
 
     socketRef.current.on("signal", gotMessageFromServer);
 
-    
     socketRef.current.on("user-left", (id) => {
       setVideos((videos) => videos.filter((video) => video.socketId !== id));
       setRemoteNames((prevNames) => {
@@ -299,11 +284,9 @@ export default function VideoCall() {
           return;
         }
 
-       
         connections[socketListId] = new RTCPeerConnection(
           peerConfigConnections,
         );
-        
 
         connections[socketListId].onicecandidate = (event) => {
           
@@ -316,7 +299,6 @@ export default function VideoCall() {
           }
         };
 
-        
         connections[socketListId].ontrack = (event) => {
           const remoteStream = event.streams[0];
           setVideos((prevVideos) => {
@@ -363,7 +345,6 @@ export default function VideoCall() {
       });
 
       if (id === socketIdRef.current) {
-        
 
         for (let id2 in connections) {
           
@@ -423,7 +404,6 @@ export default function VideoCall() {
   }, [askUsername]);
 
   let getUserMediaSuccess = (stream) => {
-    //if a users turns off this video it is this functions responsibity to turn off video for everyone
 
     try {
       window.localStream.getTracks().forEach((track) => track.stop());
@@ -452,7 +432,6 @@ export default function VideoCall() {
           } catch (e) {
             console.log(e);
           }
-          //blacksilence
 
           let blackSilence = (...args) =>
             new MediaStream([black(...args), silence()]);
@@ -501,7 +480,6 @@ export default function VideoCall() {
     setAudio(!audio);
   };
 
-  
   let stopScreenShare = () => {
     if (screenTrackRef.current) {
       screenTrackRef.current.stop();
@@ -526,7 +504,6 @@ export default function VideoCall() {
     setScreen(false);
   };
 
-  
   let startScreenShare = async () => {
     try {
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -566,7 +543,6 @@ export default function VideoCall() {
     }
   };
 
- 
   let cleanupCall = () => {
     try {
       if (window.localStream) {
@@ -610,7 +586,6 @@ export default function VideoCall() {
   }, []);
 
   let getUserMedia = () => {
-    
 
     if ((video && videoAvailable) || (audio && audioAvailable)) {
       navigator.mediaDevices
@@ -633,128 +608,157 @@ export default function VideoCall() {
   }, [audio, video]);
 
   return (
-    <div>
+    <div className="min-h-screen bg-bg text-ink">
       {accessState === "checking" && (
         <div className="lobbyContainer">
-          <h1>Checking your access...</h1>
+          <p className="text-sm text-muted">Checking your access...</p>
         </div>
       )}
 
       {accessState === "unauthorized" && (
         <div className="lobbyContainer">
-          <h1>Access denied</h1>
-          <p className="permissionError">{accessError}</p>
-          <Button variant="contained" onClick={() => navigate("/")}>
-            Back to dashboard
-          </Button>
+          <div className="lobbyCard">
+            <h1 className="text-lg font-semibold tracking-tight">Access denied</h1>
+            <p className="alert alert-error">{accessError}</p>
+            <button className="btn btn-primary" onClick={() => navigate("/")}>
+              Back to dashboard
+            </button>
+          </div>
         </div>
       )}
 
       {accessState === "error" && (
         <div className="lobbyContainer">
-          <h1>Something went wrong</h1>
-          <p className="permissionError">{accessError}</p>
-          <Button variant="contained" onClick={() => window.location.reload()}>
-            Try again
-          </Button>
+          <div className="lobbyCard">
+            <h1 className="text-lg font-semibold tracking-tight">Something went wrong</h1>
+            <p className="alert alert-error">{accessError}</p>
+            <button className="btn btn-primary" onClick={() => window.location.reload()}>
+              Try again
+            </button>
+          </div>
         </div>
       )}
 
-      {accessState === "authorized" && (askUsername === true ? (
-        <div className="lobbyContainer">
-          <h1>enter into the lobby</h1>
-
-          {permissionError && (
-            <p className="permissionError">{permissionError}</p>
-          )}
-
-          <TextField
-            id="outlined-basic"
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            variant="outlined"
-          />
-
-          <Button variant="contained" onClick={connect}>
-            Connect
-          </Button>
-
-          <div>
-            <video ref={localVideoRef} autoPlay muted></video>
-          </div>
-        </div>
-      ) : (
-        <div className="meetVideoContainer">
-          {connectionStatus !== "connected" && (
-            <div
-              className={`connectionBanner ${
-                connectionStatus === "disconnected" ? "connectionBannerError" : ""
-              }`}
-            >
-              {connectionStatus === "reconnecting"
-                ? "Connection lost - reconnecting..."
-                : "Unable to reconnect. Check your network and rejoin."}
-            </div>
-          )}
-
-          <div className="conferenceGrid">
-            {videos.map((video) => (
-              <div className="conferenceView" key={video.socketId}>
-                <video
-                  data-socket={video.socketId}
-                  ref={(ref) => {
-                    if (ref && video.stream) {
-                      ref.srcObject = video.stream;
-                    }
-                  }}
-                  autoPlay
-                ></video>
-                <span className="participantLabel">
-                  {remoteNames[video.socketId] || "Guest"}
-                </span>
+      {accessState === "authorized" &&
+        (askUsername === true ? (
+          <div className="lobbyContainer">
+            <div className="lobbyCard">
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight">Join the session</h1>
+                <p className="mt-1 text-sm text-muted">
+                  Check your camera, choose a display name and connect.
+                </p>
               </div>
-            ))}
+
+              {permissionError && <p className="alert alert-error">{permissionError}</p>}
+
+              <video ref={localVideoRef} autoPlay muted></video>
+
+              <div>
+                <label htmlFor="lobby-username" className="field-label">
+                  Display name
+                </label>
+                <input
+                  id="lobby-username"
+                  className="input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+
+              <button className="btn btn-primary btn-block" onClick={connect}>
+                Connect
+              </button>
+            </div>
           </div>
-
-          <video
-            className="meetUserVideo"
-            ref={localVideoRef}
-            autoPlay
-            muted
-          ></video>
-
-          <div className="buttonContainers">
-            <IconButton onClick={handleVideo} style={{ color: "white" }}>
-              {video === true ? <VideocamIcon /> : <VideocamOffIcon />}
-            </IconButton>
-
-            <IconButton onClick={handleAudio} style={{ color: "white" }}>
-              {audio === true ? <MicIcon /> : <MicOffIcon />}
-            </IconButton>
-
-            {screenAvailable && (
-              <IconButton
-                onClick={toggleScreenShare}
-                style={{ color: "white" }}
+        ) : (
+          <div className="meetVideoContainer">
+            {connectionStatus !== "connected" && (
+              <div
+                className={`connectionBanner ${
+                  connectionStatus === "disconnected" ? "connectionBannerError" : ""
+                }`}
               >
-                {screen === true ? (
-                  <StopScreenShareIcon />
-                ) : (
-                  <ScreenShareIcon />
-                )}
-              </IconButton>
+                {connectionStatus === "reconnecting"
+                  ? "Connection lost. Reconnecting..."
+                  : "Unable to reconnect. Check your network and rejoin."}
+              </div>
             )}
 
-            <IconButton
-              onClick={leaveCall}
-              style={{ color: "white", backgroundColor: "red" }}
-            >
-              <CallEndIcon />
-            </IconButton>
+            <div className="conferenceGrid">
+              {videos.map((video) => (
+                <div className="conferenceView" key={video.socketId}>
+                  <video
+                    data-socket={video.socketId}
+                    ref={(ref) => {
+                      if (ref && video.stream) {
+                        ref.srcObject = video.stream;
+                      }
+                    }}
+                    autoPlay
+                  ></video>
+                  <span className="participantLabel">
+                    {remoteNames[video.socketId] || "Guest"}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <video className="meetUserVideo" ref={localVideoRef} autoPlay muted></video>
+
+            <div className="buttonContainers">
+              <button
+                onClick={handleVideo}
+                className={`callBtn ${video === true ? "" : "callBtnOff"}`}
+                aria-label={video === true ? "Turn camera off" : "Turn camera on"}
+                title={video === true ? "Turn camera off" : "Turn camera on"}
+              >
+                {video === true ? (
+                  <Video className="h-5 w-5" strokeWidth={1.75} />
+                ) : (
+                  <VideoOff className="h-5 w-5" strokeWidth={1.75} />
+                )}
+              </button>
+
+              <button
+                onClick={handleAudio}
+                className={`callBtn ${audio === true ? "" : "callBtnOff"}`}
+                aria-label={audio === true ? "Mute microphone" : "Unmute microphone"}
+                title={audio === true ? "Mute microphone" : "Unmute microphone"}
+              >
+                {audio === true ? (
+                  <Mic className="h-5 w-5" strokeWidth={1.75} />
+                ) : (
+                  <MicOff className="h-5 w-5" strokeWidth={1.75} />
+                )}
+              </button>
+
+              {screenAvailable && (
+                <button
+                  onClick={toggleScreenShare}
+                  className={`callBtn ${screen === true ? "callBtnOn" : ""}`}
+                  aria-label={screen === true ? "Stop sharing screen" : "Share screen"}
+                  title={screen === true ? "Stop sharing screen" : "Share screen"}
+                >
+                  {screen === true ? (
+                    <ScreenShareOff className="h-5 w-5" strokeWidth={1.75} />
+                  ) : (
+                    <ScreenShare className="h-5 w-5" strokeWidth={1.75} />
+                  )}
+                </button>
+              )}
+
+              <button
+                onClick={leaveCall}
+                className="callBtn callBtnEnd"
+                aria-label="Leave call"
+                title="Leave call"
+              >
+                <PhoneOff className="h-5 w-5" strokeWidth={1.75} />
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 }
