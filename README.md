@@ -1,6 +1,6 @@
 
 
-Summary By me
+Summary By me-------------------------------
 study group is a place where we can find peers to study together, we can create a slot and others can request and we have control to accept or not once accepted, at the time of the slot a link will be shown in which you can hop onto a videocall built by me, currently it doesnt have share screen, it doesnt work properly but you can talk and share video and it is dockerised so you can directly start it through docker and this is written by me and not ai, if you want to know where you can read below the complete overview of the website which isnt obviously written by me
 
 # StudyGroup
