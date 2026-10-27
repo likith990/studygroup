@@ -1,105 +1,219 @@
-StudyGroup
-StudyGroup is a MERN-stack platform that helps students find and join focused study sessions with peers instead of studying alone. Users can create a study room around a topic (with a title, description, eligibility criteria, and a start time/duration), other students can request to join, the host can accept or deny requests, and once accepted, everyone meets in a built-in live video call — no need for Zoom, Google Meet, or any third-party tool.
-The core idea: studying with the right group, at the right time, on the right topic, is more effective than studying alone — and the whole loop (find a room → get accepted → jump on a call) happens inside one app.
-🎥 Video Calling (core feature)
-The video call is a peer-to-peer WebRTC call — audio/video streams go directly between participants' browsers, not through the server. The server's only job is signaling: helping browsers discover each other and exchange connection details, using Socket.IO.
-How it works under the hood:
-When a user joins a room's call, their browser connects to the Socket.IO server and emits a `join-call` event with the room ID and their username.
-The server tracks who's in which room (in-memory) and broadcasts a `user-joined` event to everyone already in that room, so browsers know who else to connect to.
-Browsers then exchange WebRTC offers/answers/ICE candidates through the server via a generic `signal` event — this is the "signaling" handshake needed to open a direct peer-to-peer connection.
-Once connected, video/audio flows directly between peers, not through the server (lower latency, less server load).
-On disconnect, the server cleans up the room's connection list and notifies remaining participants with `user-left`.
-Access to a room's call is gated server-side: only the room's host or an accepted attendee can join (checked via the `/api/room/:roomid/access` endpoint), so a meeting link alone isn't enough to get in.
-✨ Features
-Google OAuth login (via Better Auth) — no separate passwords to manage
-Create study rooms — title, topic, description, eligibility, capacity, start time, duration
-Join requests — students request to join a room; the host accepts/denies
-My Rooms dashboard — see rooms you've created and rooms you've requested/joined
-Live video calls — peer-to-peer WebRTC calls scoped to each room, gated to authorized participants
-Leave / cancel-request / delete room flows to manage bookings and seats
-🛠️ Tech Stack
-Frontend: React 19, Vite, React Router, Tailwind CSS, MUI, Axios, Socket.IO Client
-Backend: Node.js, Express 5, Socket.IO, Mongoose (MongoDB), Better Auth (Google OAuth), MongoDB Atlas driver
-📁 Project Structure
+
+
+Summary By me
+study group is a place where we can find peers to study together, we can create a slot and others can request and we have control to accept or not once accepted, at the time of the slot a link will be shown in which you can hop onto a videocall built by me, currently it doesnt have share screen, it doesnt work properly but you can talk and share video and it is dockerised so you can directly start it through docker and this is written by me and not ai, if you want to know where you can read below the complete overview of the website which isnt obviously written by me
+
+# StudyGroup
+
+StudyGroup is a MERN-stack platform that helps students find and join focused study sessions with peers instead of studying alone. Users create a study room around a topic (title, description, eligibility, start time, duration), other students request to join, the host accepts or denies, and accepted members meet in a built-in live video call. No Zoom, Google Meet, or any third-party tool is needed.
+
+The core idea: studying with the right group, at the right time, on the right topic, beats studying alone. The whole loop (find a room, get accepted, jump on a call) happens inside one app.
+
+## Features
+
+- **Google login** via Better Auth, so there are no passwords to manage
+- **Create study rooms** with title, topic, description, eligibility, capacity, start time and duration
+- **Join requests**: students request a seat, and the host accepts or denies
+- **My Rooms dashboard**: rooms you created and rooms you requested or joined
+- **Live video calls**: peer-to-peer WebRTC calls scoped to each room
+- **Access control**: only the host or an accepted attendee can join a call, so a meeting link alone is not enough
+- **Room management**: leave, cancel a request, or delete a room
+
+## Video calling
+
+Calls are peer-to-peer WebRTC. Audio and video go directly between browsers, not through the server. The server only does signaling, using Socket.IO.
+
+1. A user joins a room's call. Their browser connects to Socket.IO and emits `join-call` with the room ID and username.
+2. The server tracks who is in which room (in memory) and broadcasts `user-joined` to everyone already there.
+3. Browsers exchange WebRTC offers, answers and ICE candidates through the server using a generic `signal` event.
+4. Once connected, media flows directly between peers.
+5. On disconnect, the server cleans up and notifies the others with `user-left`.
+
+Access is checked server-side through the `/api/room/:roomid/access` endpoint.
+
+## Tech stack
+
+- **Frontend:** React 19, Vite, React Router, Tailwind CSS, MUI, Axios, Socket.IO Client
+- **Backend:** Node.js, Express 5, Socket.IO, Mongoose, Better Auth (Google OAuth), MongoDB driver
+- **Database:** MongoDB Atlas (or any MongoDB instance)
+- **Deployment tooling:** Docker, Docker Compose, nginx
+
+## Project structure
+
 ```
 studygroup/
-├── client/          # React + Vite frontend
+├── docker-compose.yml
+├── client/                  # React + Vite frontend
+│   ├── Dockerfile
+│   ├── nginx.conf
 │   └── src/
-│       ├── components/   # Landing sections, room cards, forms, accept/deny UI
-│       ├── pages/         # Landing, Dashboard, VideoCall
-│       ├── lib/           # auth-client, API base config, meeting time helpers
-│       └── services/      # auth service (login/logout)
-└── server/          # Express + Socket.IO backend
-    ├── controllers/       # socketManager.js — WebRTC signaling logic
-    ├── routes/            # room routes, user routes
-    ├── models/            # User, Room (Mongoose schemas)
-    ├── middlewares/        # requireAuth — Better Auth session check
-    ├── auth.js            # Better Auth config (Google provider, Mongo adapter)
-    └── server.js          # Express app entry point
+│       ├── components/      # Landing sections, room cards, forms, accept/deny UI
+│       ├── pages/           # Landing, Dashboard, VideoCall
+│       ├── lib/             # auth-client, API base config, meeting time helpers
+│       └── services/        # login / logout helpers
+└── server/                  # Express + Socket.IO backend
+    ├── Dockerfile
+    ├── controllers/         # socketManager.js (WebRTC signaling)
+    ├── routes/              # room and user routes
+    ├── models/              # User, Room, Meeting schemas
+    ├── middlewares/         # requireAuth (Better Auth session check)
+    ├── auth.js              # Better Auth config (Google + Mongo adapter)
+    └── server.js            # Express entry point
 ```
-🚀 Getting Started
-Prerequisites
-Node.js (v18+ recommended)
-A MongoDB Atlas cluster (free tier is fine) or a local MongoDB instance
-A Google Cloud project (for Google OAuth login — steps below)
-1. Clone and install dependencies
-```bash
-git clone <your-repo-url>
-cd studygroup
 
-cd server && npm install
-cd ../client && npm install
+## Getting started
+
+### Prerequisites
+
+- A MongoDB Atlas cluster (the free tier is fine) or another MongoDB instance
+- A Google Cloud project for OAuth login (steps below)
+- Either **Docker Desktop** (recommended) or **Node.js 18+**
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/likith990/studygroup.git
+cd studygroup
 ```
-2. Set up MongoDB
-Create a free cluster on MongoDB Atlas, create a database user, and grab your connection string (looks like `mongodb+srv://<user>:<password>@cluster.mongodb.net/studygroup`). You'll use this as `ATLASDB_URL` below.
-3. Set up Google OAuth (for login)
-This app uses Better Auth with Google as the social login provider. To get your own `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`:
-Go to the Google Cloud Console.
-Create a new project (or select an existing one) from the project dropdown at the top.
-In the left sidebar, go to APIs & Services → OAuth consent screen.
-Choose External as the user type (unless you have a Google Workspace).
-Fill in the required fields (app name, support email, developer contact email) and save.
-Under Test users, add your own Google account while the app is in "Testing" mode, so you can log in during development.
-Go to APIs & Services → Credentials.
-Click Create Credentials → OAuth client ID.
-Application type: Web application.
-Under Authorized JavaScript origins, add:
-```
-     http://localhost:5173
-     ```
-Under Authorized redirect URIs, add:
-```
-     http://localhost:8080/api/auth/callback/google
-     ```
-(This must exactly match `BETTER_AUTH_URL` + `/api/auth/callback/google` — update it if you change the server port or deploy to a real domain.)
-Click Create. Google will show you a Client ID and Client Secret — copy both.
-4. Configure environment variables
-Create a `server/.env` file:
+
+### 2. Set up MongoDB
+
+Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/atlas), create a database user, and copy the connection string. It looks like `mongodb+srv://<user>:<password>@cluster.mongodb.net/studygroup`. This is your `ATLASDB_URL`.
+
+In Atlas, go to **Network Access** and allow your IP address. While testing you can allow `0.0.0.0/0`, but don't leave it open in production.
+
+### 3. Set up Google OAuth
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) and create or select a project.
+2. Go to **APIs & Services, then OAuth consent screen**. Choose **External**, fill in the app name and emails, and save.
+3. Under **Test users**, add your own Google account.
+4. Go to **APIs & Services, then Credentials, then Create Credentials, then OAuth client ID**, and choose **Web application**.
+5. Under **Authorized JavaScript origins**, add:
+   ```
+   http://localhost:5173
+   ```
+6. Under **Authorized redirect URIs**, add:
+   ```
+   http://localhost:8080/api/auth/callback/google
+   ```
+   This must exactly match `BETTER_AUTH_URL` plus `/api/auth/callback/google`.
+7. Click **Create** and copy the Client ID and Client Secret.
+
+### 4. Configure environment variables
+
+Create `server/.env`:
+
 ```env
 PORT=8080
 ATLASDB_URL=your_mongodb_connection_string
 CLIENT_URL=http://localhost:5173
 BETTER_AUTH_URL=http://localhost:8080
+BETTER_AUTH_SECRET=your_random_secret_at_least_32_characters
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
-Create a `client/.env` file:
+
+Generate a proper secret with:
+
+```bash
+openssl rand -base64 32
+```
+
+If you run without Docker, also create `client/.env`:
+
 ```env
 VITE_SERVER_URL=http://localhost:8080
 ```
-> ⚠️ Never commit your `.env` files — they contain secrets. This repo's `.gitignore` already excludes them.
-5. Run the app
+
+> Never commit `.env` files. They contain secrets, and the repo's `.gitignore` already excludes them.
+
+## Running the app
+
+### Option A: Docker (recommended)
+
+From the project root:
+
+```bash
+docker compose up --build
+```
+
+Then open **http://localhost:5173**.
+
+Useful commands:
+
+```bash
+docker compose up -d              # run in the background
+docker compose logs -f server     # follow server logs
+docker compose down               # stop and remove containers
+docker compose up --build         # rebuild after code changes
+```
+
+How it works:
+
+| Service  | Image                | Port (host) | Notes                                      |
+| -------- | -------------------- | ----------- | ------------------------------------------ |
+| `server` | Node 22 (Alpine)     | 8080        | Reads `server/.env` at runtime             |
+| `client` | nginx serving a Vite build | 5173  | Falls back to `index.html` for React Router |
+
+Things to know:
+
+- The database is MongoDB Atlas, so there is no Mongo container.
+- `VITE_SERVER_URL` is baked into the client at **build time**. It is set under `build.args` in `docker-compose.yml`, not in a runtime `.env`. If you change it, rebuild with `docker compose up --build`.
+- The server runs with `NODE_ENV=production`, so `BETTER_AUTH_SECRET` is **required**. Without it the server exits on startup.
+
+### Option B: Run without Docker
+
 In one terminal:
+
 ```bash
 cd server
-npm start
+npm install
+node server.js
 ```
+
 In another terminal:
+
 ```bash
 cd client
+npm install
 npm run dev
 ```
-The client will run on `http://localhost:5173` and the server on `http://localhost:8080`. Open the client URL in your browser, log in with Google, and you're in.
-📌 Notes
-The video call signaling server keeps connection state in memory, so restarting the server will drop active calls (fine for development; consider a shared store like Redis if scaling across multiple server instances in production).
-Room `capacity` defaults to 2 if not specified when creating a room.
+
+The client runs on http://localhost:5173 and the server on http://localhost:8080.
+
+## Environment variables
+
+| Variable               | Where  | Description                                           |
+| ---------------------- | ------ | ----------------------------------------------------- |
+| `PORT`                 | server | Server port (default 8080)                            |
+| `ATLASDB_URL`          | server | MongoDB connection string                             |
+| `CLIENT_URL`           | server | Frontend origin, used for CORS and meeting links      |
+| `BETTER_AUTH_URL`      | server | Public URL of the server                              |
+| `BETTER_AUTH_SECRET`   | server | Secret for signing sessions (32+ random characters)   |
+| `GOOGLE_CLIENT_ID`     | server | Google OAuth client ID                                |
+| `GOOGLE_CLIENT_SECRET` | server | Google OAuth client secret                            |
+| `VITE_SERVER_URL`      | client | Backend URL, baked in at build time                   |
+
+## Troubleshooting
+
+- **Server restarts in a loop with "default secret":** set `BETTER_AUTH_SECRET` in `server/.env`.
+- **`connection failed` or a Mongo timeout:** add your IP in Atlas under Network Access.
+- **`redirect_uri_mismatch` on Google login:** the origin and redirect URI in Google Cloud must match the values in step 3 exactly.
+- **Blank page on refresh at a deep link:** make sure you are using the provided `nginx.conf`.
+- **Changed `VITE_SERVER_URL` but nothing happened:** rebuild the client with `docker compose up --build`.
+
+## Deploying to a real domain
+
+Update these together:
+
+- `VITE_SERVER_URL` in `docker-compose.yml` (client build arg)
+- `CLIENT_URL` and `BETTER_AUTH_URL` in `server/.env`
+- `trustedOrigins` in `server/auth.js` and `callbackURL` in `client/src/services/authServices.jsx`, which are currently hardcoded to `http://localhost:5173`
+- The authorized origins and redirect URIs in Google Cloud Console
+- Serve the app over HTTPS
+
+## Notes
+
+- Signaling state lives in server memory, so restarting the server drops active calls. For multiple server instances, use a shared store such as Redis.
+- Room `capacity` defaults to 2 if not specified.
+- WebRTC here uses direct peer connections with no TURN server, so calls may fail on some strict networks or NATs.
